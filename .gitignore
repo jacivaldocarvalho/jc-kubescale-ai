@@ -1,0 +1,520 @@
+============================================
+JC-KubeScale AI - .gitignore
+============================================
+--------------------------------------------
+OS / Sistema operacional
+--------------------------------------------
+
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+
+--------------------------------------------
+IDEs / Editores
+--------------------------------------------
+
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+--------------------------------------------
+Ambiente / Variáveis locais
+--------------------------------------------
+
+.env
+.env.*
+!.env.example
+!.env.template
+
+--------------------------------------------
+Secrets / Credenciais
+--------------------------------------------
+
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials.json
+service-account.json
+secrets.json
+
+Não versionar secrets Kubernetes locais
+
+secrets/
+**/secrets/
+*.secret.yaml
+*.secret.yml
+*-secret.yaml
+*-secret.yml
+
+--------------------------------------------
+Python / FastAPI
+--------------------------------------------
+
+pycache/
+*.py[cod]
+*$py.class
+
+*.so
+
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+
+*.egg
+*.egg-info/
+.installed.cfg
+MANIFEST
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.pyre/
+.ruff_cache/
+
+Virtual environments
+
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+Poetry
+
+poetry.lock
+
+PDM
+
+.pdm.toml
+.pdm-python
+
+Jupyter
+
+.ipynb_checkpoints/
+
+--------------------------------------------
+Go
+--------------------------------------------
+Binários
+
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+Binários / builds locais
+
+/bin/
+/build/
+
+Testes / profiling
+
+*.test
+*.out
+coverage.out
+coverage.html
+
+Go workspace
+
+go.work
+go.work.sum
+
+--------------------------------------------
+Node.js / Frontend / tooling auxiliar
+--------------------------------------------
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.yarn/
+.pnpm-store/
+
+Builds
+
+.next/
+.nuxt/
+dist/
+coverage/
+
+--------------------------------------------
+Kubernetes
+--------------------------------------------
+Configuração local do kubectl
+
+.kube/
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+
+Dumps / manifests gerados localmente
+
+*.generated.yaml
+*.generated.yml
+*.rendered.yaml
+*.rendered.yml
+
+Outputs locais
+
+k8s/generated/
+k8s/rendered/
+manifests/generated/
+manifests/rendered/
+
+--------------------------------------------
+Kind
+--------------------------------------------
+
+kind-config.local.yaml
+kind-config.local.yml
+
+Imagens / exports locais de containers
+
+*.tar
+*.tar.gz
+
+--------------------------------------------
+Helm
+--------------------------------------------
+Artefatos empacotados
+
+*.tgz
+
+Cache / repositórios locais
+
+.helm/
+helm-cache/
+helm-repository/
+
+Overrides locais
+
+values.local.yaml
+values.local.yml
+values-.local.yaml
+values-.local.yml
+
+Helm test outputs
+
+helm-test-output/
+
+--------------------------------------------
+KServe / Model Serving
+--------------------------------------------
+Configurações locais de modelos
+
+models/
+model-cache/
+model-cache/
+huggingface/
+.huggingface/
+
+Modelos baixados localmente
+
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.gguf
+*.onnx
+
+Cache de modelos
+
+.cache/
+.cache/huggingface/
+.cache/torch/
+
+--------------------------------------------
+vLLM / LLM
+--------------------------------------------
+Cache local de modelos e compilação
+
+.vllm/
+vllm-cache/
+torch-cache/
+
+CUDA / compilação local
+
+.cuda/
+*.cubin
+*.ptx
+
+--------------------------------------------
+Docker
+--------------------------------------------
+Docker Compose local overrides
+
+docker-compose.override.yml
+docker-compose.local.yml
+
+Docker build context temporário
+
+.docker/
+
+Docker credentials
+
+.docker/config.json
+
+--------------------------------------------
+Terraform
+--------------------------------------------
+Estado Terraform
+
+*.tfstate
+.tfstate.
+.terraform.tfstate.lock.info
+
+Diretório de trabalho Terraform
+
+.terraform/
+
+Variáveis locais
+
+*.tfvars
+*.tfvars.json
+
+Exceto exemplos
+
+!.tfvars.example
+!.tfvars.template
+
+Crash logs
+
+crash.log
+crash.*.log
+
+Override files
+
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+--------------------------------------------
+Terragrunt
+--------------------------------------------
+
+.terragrunt-cache/
+
+--------------------------------------------
+Ansible
+--------------------------------------------
+
+*.retry
+ansible.log
+
+--------------------------------------------
+Prometheus
+--------------------------------------------
+Dados locais
+
+prometheus-data/
+prometheus-data-local/
+*.prom
+
+--------------------------------------------
+Grafana
+--------------------------------------------
+Banco local
+
+grafana.db
+
+Dados locais
+
+grafana-data/
+grafana-data-local/
+
+--------------------------------------------
+Loki
+--------------------------------------------
+
+loki-data/
+loki-data-local/
+
+--------------------------------------------
+OpenTelemetry
+--------------------------------------------
+
+otel-data/
+otel-data-local/
+
+--------------------------------------------
+Argo CD
+--------------------------------------------
+Configurações locais / credenciais
+
+argocd-local/
+argocd-secret.yaml
+argocd-secret.yml
+
+--------------------------------------------
+CI/CD - GitHub Actions
+--------------------------------------------
+Artefatos locais de CI
+
+.github/act/
+.act/
+
+Logs
+
+*.log
+
+--------------------------------------------
+Testes / Load Testing
+--------------------------------------------
+Resultados de testes
+
+test-results/
+test-results/
+test-output/
+test-outputs/
+load-test-results/
+benchmark-results/
+performance-results/
+
+Ferramentas comuns
+
+k6-results/
+locust-results/
+
+--------------------------------------------
+Logs da aplicação
+--------------------------------------------
+
+logs/
+*.log
+.log.
+log/
+
+--------------------------------------------
+Databases locais
+--------------------------------------------
+
+*.db
+*.sqlite
+*.sqlite3
+
+--------------------------------------------
+Cache / arquivos temporários
+--------------------------------------------
+
+.cache/
+.cache-loader/
+.tmp/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+--------------------------------------------
+Coverage / Reports
+--------------------------------------------
+
+coverage/
+reports/
+*.lcov
+junit.xml
+test-results.xml
+
+--------------------------------------------
+Documentação
+--------------------------------------------
+Documentação local do projeto
+
+/docs/
+
+--------------------------------------------
+Arquivos gerados
+--------------------------------------------
+
+generated/
+generated-files/
+artifacts/
+artifacts-local/
+
+--------------------------------------------
+Ferramentas de desenvolvimento local
+--------------------------------------------
+Direnv
+
+.direnv/
+
+Mise / ferramentas locais
+
+.mise/
+
+LocalStack
+
+.localstack/
+
+Minikube
+
+.minikube/
+
+k9s
+
+.k9s/
+
+Skaffold
+
+.skaffold/
+
+Tilt
+
+.tilt/
+
+--------------------------------------------
+Backup / arquivos de sistema
+--------------------------------------------
+
+*.orig
+*.rej
+*.old
+*.save
+*.swp
+*.swo
+
+--------------------------------------------
+Arquivos locais específicos do projeto
+--------------------------------------------
+
+.local/
+.local-*
+*.local
