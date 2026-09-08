@@ -73,11 +73,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       
-      - name: Install dependencies
+      - name: Install runtime dependencies
         run: |
           cd services/api
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx pytest-cov
+
+      - name: Install development dependencies
+        run: |
+          cd services/api
+          pip install -r requirements-dev.txt
       
       - name: Run tests
         run: |
