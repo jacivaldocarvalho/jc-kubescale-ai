@@ -38,6 +38,11 @@ jobs:
           cd services/api
           pip install -r requirements.txt
           pip install flake8 black
+
+      - name: Install development dependencies
+        run: |
+          cd services/api
+          pip install black flake8 pytest pytest-asyncio pytest-cov
       
       - name: Lint with flake8
         run: |
