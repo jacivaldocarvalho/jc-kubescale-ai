@@ -24,9 +24,7 @@ async def list_models():
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(
-    request: ChatRequest, inference: InferenceService = Depends(get_inference_service)
-):
+async def chat(request: ChatRequest, inference: InferenceService = Depends(get_inference_service)):
     try:
         response = await inference.chat(
             message=request.message,

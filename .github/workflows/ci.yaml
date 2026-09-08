@@ -21,21 +21,36 @@ jobs:
         with:
           python-version: '3.11'
       
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/api/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
       - name: Install dependencies
         run: |
-          pip install flake8 black mypy
+          cd services/api
+          pip install -r requirements.txt
+          pip install flake8 black mypy types-requests types-python-json-logger
       
       - name: Lint with flake8
         run: |
           cd services/api
           flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
       
-      - name: Black check
+      - name: Check import sorting with isort
+        run: |
+          cd services/api
+          isort --check-only --diff src/ || true
+      
+      - name: Format check with Black
         run: |
           cd services/api
           black --check src/
       
-      - name: MyPy check
+      - name: Type check with MyPy
         run: |
           cd services/api
           mypy src/
@@ -51,16 +66,30 @@ jobs:
         with:
           python-version: '3.11'
       
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/api/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
       - name: Install dependencies
         run: |
           cd services/api
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx
+          pip install pytest pytest-asyncio httpx pytest-cov
       
       - name: Run tests
         run: |
           cd services/api
-          python -m pytest src/tests/ -v --cov=src
+          python -m pytest src/tests/ -v --cov=src --cov-report=xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./services/api/coverage.xml
+          fail_ci_if_error: false
 
   security:
     runs-on: ubuntu-latest
