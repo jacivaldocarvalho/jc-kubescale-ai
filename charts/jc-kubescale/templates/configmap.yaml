@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "jc-kubescale.fullname" . }}-config
+  labels:
+    {{- include "jc-kubescale.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    api:
+      title: JC-KubeScale AI API
+      version: {{ .Chart.AppVersion }}
+      debug: {{ .Values.config.debug }}
+    
+    inference:
+      endpoint: {{ .Values.config.inferenceEndpoint }}
+      model_name: {{ .Values.config.modelName }}
+      model_version: {{ .Values.config.modelVersion }}
+    
+    observability:
+      otlp_endpoint: {{ .Values.observability.otlpEndpoint | default "" }}

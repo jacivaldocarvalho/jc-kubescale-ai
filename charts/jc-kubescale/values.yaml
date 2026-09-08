@@ -1,0 +1,56 @@
+# Default values for jc-kubescale
+replicaCount: 1
+
+image:
+  repository: jc-kubescale-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: jc-kubescale.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+config:
+  debug: false
+  logLevel: INFO
+  inferenceEndpoint: "http://kserve-inference:8080"
+  modelName: "qwen"
+  modelVersion: "1"
+  authEnabled: false
+  rateLimitEnabled: false
+
+observability:
+  otlpEndpoint: ""
+  prometheusEnabled: true
+
+security:
+  rbacEnabled: true
+  podSecurityEnabled: true

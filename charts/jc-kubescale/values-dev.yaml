@@ -1,0 +1,31 @@
+replicaCount: 1
+
+image:
+  repository: jc-kubescale-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+config:
+  debug: true
+  logLevel: DEBUG
+  inferenceEndpoint: "http://kserve-inference:8080"
+  modelName: "qwen"
+  modelVersion: "1"
+  authEnabled: false
+  rateLimitEnabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+observability:
+  otlpEndpoint: ""
+  prometheusEnabled: true
