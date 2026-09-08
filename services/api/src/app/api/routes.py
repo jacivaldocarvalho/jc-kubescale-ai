@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 import logging
 
-from app.api.models import ChatRequest, ChatResponse, CompletionRequest, CompletionResponse
+from app.api.models import (
+    ChatRequest,
+    ChatResponse,
+    CompletionRequest,
+    CompletionResponse,
+)
 from app.api.dependencies import get_inference_service
 from app.services.inference import InferenceService
 from app.models.schemas import ModelInfo, ModelsResponse, Usage
@@ -10,40 +15,42 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1")
 
+
 @router.get("/models", response_model=ModelsResponse)
 async def list_models():
     inference = InferenceService()
     models = await inference.list_models()
     return ModelsResponse(models=models)
 
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-    request: ChatRequest,
-    inference: InferenceService = Depends(get_inference_service)
+    request: ChatRequest, inference: InferenceService = Depends(get_inference_service)
 ):
     try:
         response = await inference.chat(
             message=request.message,
             model=request.model,
             temperature=request.temperature,
-            max_tokens=request.max_tokens
+            max_tokens=request.max_tokens,
         )
         return response
     except Exception as e:
         logger.error(f"Chat error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/completions", response_model=CompletionResponse)
 async def completions(
     request: CompletionRequest,
-    inference: InferenceService = Depends(get_inference_service)
+    inference: InferenceService = Depends(get_inference_service),
 ):
     try:
         response = await inference.completions(
             prompt=request.prompt,
             model=request.model,
             max_tokens=request.max_tokens,
-            temperature=request.temperature
+            temperature=request.temperature,
         )
         return response
     except Exception as e:
