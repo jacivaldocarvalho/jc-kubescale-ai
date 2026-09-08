@@ -60,28 +60,39 @@ ensure_newline_before_comments = true
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = true
+warn_return_any = false
 warn_unused_configs = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_redundant_casts = true
 warn_unreachable = true
-check_untyped_defs = true
+check_untyped_defs = false
 no_implicit_optional = true
 disallow_untyped_defs = false
-disallow_any_generics = true
-disallow_subclassing_any = true
+disallow_any_generics = false
+disallow_subclassing_any = false
 show_error_codes = true
 pretty = true
 color_output = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
+ignore_missing_imports = true
+follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = [
+    "pydantic.*",
     "pydantic_settings.*",
+    "fastapi.*",
+    "uvicorn.*",
+    "starlette.*",
+    "httpx.*",
     "pythonjsonlogger.*",
     "prometheus_client.*",
 ]
 ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

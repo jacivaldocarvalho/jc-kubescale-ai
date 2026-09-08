@@ -8,18 +8,18 @@ logger = logging.getLogger(__name__)
 
 
 class InferenceService:
-    _instance = None
-    _ready = False
+    _instance: Optional["InferenceService"] = None
+    _ready: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "InferenceService":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
-        self.base_url = settings.INFERENCE_ENDPOINT
-        self.model_name = settings.MODEL_NAME
-        self.model_version = settings.MODEL_VERSION
+    def __init__(self) -> None:
+        self.base_url: str = settings.INFERENCE_ENDPOINT
+        self.model_name: str = settings.MODEL_NAME
+        self.model_version: str = settings.MODEL_VERSION
 
     async def is_ready(self) -> bool:
         self._ready = True
@@ -39,6 +39,8 @@ class InferenceService:
             "Kubernetes agrupa containers em pods para facilitar o gerenciamento.",
             "ia": "Inteligencia Artificial e um campo da computacao que busca criar sistemas capazes de "
             "realizar tarefas que normalmente requerem inteligencia humana.",
+            "machine learning": "Machine Learning e uma area da Inteligencia Artificial que permite que "
+            "sistemas aprendam e melhorem a partir de dados sem serem explicitamente programados.",
             "default": f"Voce perguntou sobre: {message}. Como modelo Qwen, processei sua mensagem "
             f"e estou respondendo de forma simulada para demonstracao do sistema.",
         }
