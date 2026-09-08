@@ -38,11 +38,6 @@ jobs:
           cd services/api
           pip install -r requirements.txt
           pip install flake8 black
-
-      - name: Install development dependencies
-        run: |
-          cd services/api
-          pip install black flake8 pytest pytest-asyncio pytest-cov
       
       - name: Lint with flake8
         run: |
@@ -99,7 +94,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner (Filesystem)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
@@ -107,12 +102,13 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
       
-      - name: Upload Trivy results to GitHub Security tab
+      - name: Upload Trivy filesystem results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
+          category: 'trivy-filesystem'
       
-      - name: Run Trivy on Dockerfile
+      - name: Run Trivy vulnerability scanner (Dockerfile)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'config'
@@ -120,10 +116,11 @@ jobs:
           format: 'sarif'
           output: 'trivy-dockerfile.sarif'
       
-      - name: Upload Dockerfile scan results
+      - name: Upload Trivy Dockerfile results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-dockerfile.sarif'
+          category: 'trivy-dockerfile'
 
   build:
     runs-on: ubuntu-latest
