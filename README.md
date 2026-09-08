@@ -2,19 +2,7 @@
 
 Kubernetes-Native AI Inference & Autoscaling Platform
 
-[![CI](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml/badge.svg)](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml)
-
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.28-blue)](https://kubernetes.io)
-
-[![Helm](https://img.shields.io/badge/Helm-3.0-blue)](https://helm.sh)
-
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-
-[![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org)
-
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)](https://fastapi.tiangolo.com)
-
-[![Phase](https://img.shields.io/badge/Phase-1-yellow)](https://github.com/jacivaldocarvalho/jc-kubescale-ai)
+[![CI](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml/badge.svg)](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml) [![Kubernetes](https://img.shields.io/badge/Kubernetes-1.28-blue)](https://kubernetes.io) [![Helm](https://img.shields.io/badge/Helm-3.0-blue)](https://helm.sh) [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE) [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org) [![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)](https://fastapi.tiangolo.com) [![Phase](https://img.shields.io/badge/Phase-1-yellow)](https://github.com/jacivaldocarvalho/jc-kubescale-ai)
 
 ## Project Status
 
