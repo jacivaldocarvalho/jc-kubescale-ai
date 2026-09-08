@@ -28,7 +28,6 @@ dev = [
     "flake8>=6.1.0",
     "mypy>=1.6.0",
     "types-requests>=2.31.0",
-    "types-python-json-logger>=3.1.0",
 ]
 
 [tool.black]
