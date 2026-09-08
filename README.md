@@ -7,43 +7,43 @@ Kubernetes-native AI Inference & Autoscaling Platform
 [![Helm](https://img.shields.io/badge/Helm-3.0-blue)](https://helm.sh)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-## Problema
+## Problem
 
-LLMs (Large Language Models) possuem características operacionais únicas:
+LLMs (Large Language Models) have unique operational characteristics:
 
-* Alto consumo de memória e GPU/VRAM
-* Latência variável dependendo do tamanho do modelo
-* Cold start significativo durante carregamento
-* KV cache que cresce com o contexto
-* Concorrência limitada por pod
-* Custo elevado de infraestrutura
+* High memory and GPU/VRAM usage
+* Variable latency depending on model size
+* Significant cold starts during model loading
+* KV cache that grows with context length
+* Limited concurrency per pod
+* High infrastructure costs
 
-Operar LLMs em Kubernetes exige conhecimento especializado em:
+Running LLMs on Kubernetes requires specialized knowledge of:
 
-* KServe para serving
-* vLLM para inferência otimizada
-* Autoscaling baseado em métricas de inferência
-* GPU scheduling e quotas
-* Observabilidade específica para workloads de IA
+* KServe for model serving
+* vLLM for optimized inference
+* Autoscaling based on inference metrics
+* GPU scheduling and quotas
+* Observability tailored to AI workloads
 
-## Solução
+## Solution
 
-JC-KubeScale AI é uma plataforma Kubernetes-native que abstrai toda a complexidade de operação de LLMs.
+JC-KubeScale AI is a Kubernetes-native platform that abstracts away the complexity of running LLMs.
 
-**Para o consumidor:**
+**For the API consumer:**
 
 ```bash
 curl http://localhost:8080/v1/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "Explique Kubernetes em três parágrafos"}'
+  -d '{"message": "Explain Kubernetes in three paragraphs"}'
 ```
 
-**Retorno:**
+**Response:**
 
 ```json
 {
   "model": "qwen",
-  "response": "Kubernetes é uma plataforma...",
+  "response": "Kubernetes is a platform...",
   "usage": {
     "input_tokens": 10,
     "output_tokens": 50
@@ -51,7 +51,7 @@ curl http://localhost:8080/v1/chat \
 }
 ```
 
-## Arquitetura
+## Architecture
 
 ```text
                          INTERNET
@@ -97,51 +97,51 @@ curl http://localhost:8080/v1/chat \
 
 ## Features
 
-* API RESTful com FastAPI
-* Model Serving com KServe + vLLM
-* Autoscaling inteligente baseado em métricas de inferência
-* Observabilidade completa (Prometheus, Grafana, Loki, OpenTelemetry)
-* GitOps com Argo CD
-* CI/CD com GitHub Actions
-* Infrastructure as Code com Terraform
+* RESTful API with FastAPI
+* Model serving with KServe + vLLM
+* Intelligent autoscaling based on inference metrics
+* Comprehensive observability (Prometheus, Grafana, Loki, OpenTelemetry)
+* GitOps with Argo CD
+* CI/CD with GitHub Actions
+* Infrastructure as Code with Terraform
 * Canary Deployments
 * Chaos Engineering
-* SLO/SLI definidos e monitorados
+* Defined and monitored SLOs/SLIs
 
 ## Quick Start
 
 ```bash
-# Clone o repositório
+# Clone the repository
 git clone https://github.com/jacivaldocarvalho/jc-kubescale-ai.git
 
 cd jc-kubescale-ai
 
-# Cria cluster Kind
+# Create a Kind cluster
 make cluster
 
-# Instala dependências
+# Install dependencies
 make install
 
-# Deploy da plataforma
+# Deploy the platform
 make deploy
 
-# Executa testes
+# Run tests
 make test
 
-# Acessa a API
+# Access the API
 curl http://localhost:8080/health
 ```
 
-## Requisitos
+## Requirements
 
 * Docker 20.10+
-* Kubernetes 1.28+ (Kind para desenvolvimento)
+* Kubernetes 1.28+ (Kind for development)
 * Helm 3.0+
-* Go 1.21+ (para alguns componentes)
-* Python 3.11+ (para API)
+* Go 1.21+ (for some components)
+* Python 3.11+ (for the API)
 * Make
 
-## Exemplos de API
+## API Examples
 
 ### Health Check
 
@@ -149,7 +149,7 @@ curl http://localhost:8080/health
 curl http://localhost:8080/health
 ```
 
-### Listar Modelos
+### List Models
 
 ```bash
 curl http://localhost:8080/v1/models
@@ -160,7 +160,7 @@ curl http://localhost:8080/v1/models
 ```bash
 curl -X POST http://localhost:8080/v1/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "O que é inteligência artificial?"}'
+  -d '{"message": "What is artificial intelligence?"}'
 ```
 
 ### Completions
@@ -168,28 +168,28 @@ curl -X POST http://localhost:8080/v1/chat \
 ```bash
 curl -X POST http://localhost:8080/v1/completions \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Explique machine learning em", "max_tokens": 100}'
+  -d '{"prompt": "Explain machine learning in", "max_tokens": 100}'
 ```
 
 ## Autoscaling
 
-O JC-KubeScale Autoscaler implementa lógica específica para LLMs:
+The JC-KubeScale Autoscaler implements logic specific to LLMs:
 
-**Scale Up — Condições:**
+**Scale Up — Conditions:**
 
 * `queue_depth > threshold`
 * `KV cache > 80%`
 * `P95 latency > SLO`
 
-**Scale Down — Condições:**
+**Scale Down — Conditions:**
 
 * `queue_depth ≈ 0`
 * KV cache low
-* Latência normal
+* Normal latency
 
-## Observabilidade
+## Observability
 
-Dashboards Grafana com métricas:
+Grafana dashboards with the following metrics:
 
 * Requests/s
 * P95 Latency
@@ -199,30 +199,30 @@ Dashboards Grafana com métricas:
 * Active requests
 * Model load time
 
-## Segurança
+## Security
 
-* RBAC no Kubernetes
+* Kubernetes RBAC
 * Network Policies
 * Pod Security Policies
-* Kyverno para policies
-* TLS para endpoints
-* Secrets gerenciados
+* Kyverno for policies
+* TLS for endpoints
+* Managed secrets
 * Rate Limiting
-* JWT/OAuth2 preparado
+* JWT/OAuth2 ready
 
 ## Roadmap
 
-* **Fase 1**: MVP com API básica e deploy Kubernetes
-* **Fase 2**: Observabilidade (Prometheus, Grafana, Loki, OTel)
-* **Fase 3**: Autoscaling inteligente
-* **Fase 4**: Model Registry e Canary Deployments
-* **Fase 5**: Terraform e produção
-* **Fase 6**: SRE (Load Testing, Chaos Engineering, SLO)
+* **Phase 1**: MVP with a basic API and Kubernetes deployment
+* **Phase 2**: Observability (Prometheus, Grafana, Loki, OTel)
+* **Phase 3**: Intelligent autoscaling
+* **Phase 4**: Model Registry and Canary Deployments
+* **Phase 5**: Terraform and production
+* **Phase 6**: SRE (Load Testing, Chaos Engineering, SLO)
 
-## Contribuição
+## Contributing
 
-Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para detalhes.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-## Licença
+## License
 
-Este projeto está licenciado sob a **MIT License**. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for more details.
