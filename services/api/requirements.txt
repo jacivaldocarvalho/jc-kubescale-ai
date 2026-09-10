@@ -6,3 +6,9 @@ python-multipart==0.0.31
 httpx==0.28.1
 python-json-logger==3.2.1
 prometheus-client==0.21.1
+
+# OpenTelemetry
+opentelemetry-api==1.28.0
+opentelemetry-sdk==1.28.0
+opentelemetry-exporter-otlp==1.28.0
+opentelemetry-instrumentation-fastapi==0.49b0
