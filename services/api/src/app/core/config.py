@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     MODEL_VERSION: str = "1"
 
     # Observability
-    OTLP_ENDPOINT: Optional[str] = None
+    OTLP_ENDPOINT: Optional[str] = "otel-collector.observability.svc.cluster.local:4317"
     LOG_LEVEL: str = "INFO"
 
     # Auth

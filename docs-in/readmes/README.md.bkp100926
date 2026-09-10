@@ -2,44 +2,40 @@
 
 Kubernetes-Native AI Inference & Autoscaling Platform
 
-[![CI](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml/badge.svg)](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.28-blue)](https://kubernetes.io)
-[![Helm](https://img.shields.io/badge/Helm-3.0-blue)](https://helm.sh)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)](https://fastapi.tiangolo.com)
-[![Prometheus](https://img.shields.io/badge/Prometheus-2.51-orange)](https://prometheus.io)
-[![Grafana](https://img.shields.io/badge/Grafana-10.4-orange)](https://grafana.com)
-[![Phase](https://img.shields.io/badge/Phase-2-yellow)](https://github.com/jacivaldocarvalho/jc-kubescale-ai)
+[![CI](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml/badge.svg)](https://github.com/jacivaldocarvalho/jc-kubescale-ai/actions/workflows/ci.yaml) [![Kubernetes](https://img.shields.io/badge/Kubernetes-1.28-blue)](https://kubernetes.io) [![Helm](https://img.shields.io/badge/Helm-3.0-blue)](https://helm.sh) [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE) [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org) [![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)](https://fastapi.tiangolo.com) [![Phase](https://img.shields.io/badge/Phase-1-yellow)](https://github.com/jacivaldocarvalho/jc-kubescale-ai)
 
 ## Project Status
 
-**PHASE 2 - Observability Completed**
+**PHASE 1 - MVP Completed**
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| **PHASE 1** | MVP with basic API and Kubernetes deployment | Completed |
-| **PHASE 2** | Observability (Prometheus, Grafana, Loki, OTel) | Completed |
-| **PHASE 3** | Intelligent autoscaling | Next |
+* [x] RESTful API with FastAPI
+* [x] Kubernetes deployment using Kind
+* [x] Endpoints: `/health`, `/ready`, `/v1/models`, `/v1/chat`, `/v1/completions`
+* [x] Basic Prometheus metrics
+* [x] Structured JSON logging
+* [x] Makefile for automation
+* [x] Initial documentation
+
+**Next Phase:** Observability (Prometheus, Grafana, Loki, OpenTelemetry)
 
 ## Problem
 
 LLMs (Large Language Models) have unique operational characteristics:
 
-- High memory and GPU/VRAM consumption
-- Variable latency depending on model size
-- Significant cold-start time during model loading
-- KV cache growth as context size increases
-- Limited concurrency per pod
-- High infrastructure costs
+* High memory and GPU/VRAM consumption
+* Variable latency depending on model size
+* Significant cold-start time during model loading
+* KV cache growth as context size increases
+* Limited concurrency per pod
+* High infrastructure costs
 
 Operating LLMs on Kubernetes requires specialized knowledge of:
 
-- KServe for model serving
-- vLLM for optimized inference
-- Autoscaling based on inference metrics
-- GPU scheduling and quotas
-- Observability tailored to AI workloads
+* KServe for model serving
+* vLLM for optimized inference
+* Autoscaling based on inference metrics
+* GPU scheduling and quotas
+* Observability tailored to AI workloads
 
 ## Solution
 
@@ -67,15 +63,15 @@ curl http://localhost:8080/v1/chat \
 }
 ```
 
-## Current Architecture (PHASE 2)
+## Current Architecture (PHASE 1)
 
-```
+```text
                          CLIENT
-                            │
-                            ▼
+                           │
+                           ▼
                     ┌─────────────────┐
                     │  localhost:8080 │
-                    │    (NodePort)   │
+                    │   (NodePort)    │
                     └────────┬────────┘
                              │
                              ▼
@@ -106,30 +102,11 @@ curl http://localhost:8080/v1/chat \
                     │  /v1/chat       │
                     │  /v1/completions│
                     └─────────────────┘
-
-
-        ┌───────────────────────────────────────┐
-        │           OBSERVABILITY                │
-        │                                       │
-        │  ┌─────────────┐  ┌─────────────┐    │
-        │  │ Prometheus  │  │   Grafana   │    │
-        │  │  (Metrics)  │  │  (Dashboards)│    │
-        │  └──────┬──────┘  └──────┬──────┘    │
-        │         │                │            │
-        │  ┌──────┴──────┐  ┌──────┴──────┐    │
-        │  │    Loki     │  │    OTel     │    │
-        │  │   (Logs)    │  │  (Traces)   │    │
-        │  └─────────────┘  └─────────────┘    │
-        │                                       │
-        │  Grafana: http://localhost:3000      │
-        │  Prometheus: http://localhost:9090   │
-        │  Loki: http://localhost:3100         │
-        └───────────────────────────────────────┘
 ```
 
 ## Planned Architecture (Complete)
 
-```
+```text
                          INTERNET
                             │
                             ▼
@@ -169,7 +146,7 @@ curl http://localhost:8080/v1/chat \
 
 
         ┌───────────────────────────────────────┐
-        │           OBSERVABILITY                │
+        │            OBSERVABILITY              │
         │                                       │
         │ Prometheus │ Grafana │ Loki │ OTel    │
         └───────────────────────────────────────┘
@@ -184,51 +161,39 @@ curl http://localhost:8080/v1/chat \
 
 ## Implemented Features (PHASE 1)
 
-- [x] RESTful API with FastAPI
-- [x] Kubernetes deployment using Kind with NodePort
-- [x] Direct access through port 8080 without port forwarding
-- [x] Health, readiness, and metrics endpoints
-- [x] Chat and completions endpoints
-- [x] Mock inference for development
-- [x] Structured JSON logging
-- [x] Basic Prometheus metrics
-- [x] Makefile for task automation
-- [x] Setup and verification scripts
-- [x] Technical and beginner-friendly documentation
-
-## Implemented Features (PHASE 2)
-
-- [x] Prometheus for metrics collection
-- [x] Grafana for visualization
-- [x] Loki for log aggregation
-- [x] OpenTelemetry Collector for traces
-- [x] Grafana dashboards provisioned via ConfigMap
-- [x] Persistent storage for Grafana (PVC)
-- [x] RBAC for Prometheus pod discovery
-- [x] Annotations for Prometheus auto-discovery
-- [x] Automated port-forwarding
-- [x] Health checks and readiness probes
+* [x] RESTful API with FastAPI
+* [x] Kubernetes deployment using Kind with NodePort
+* [x] Direct access through port 8080 without port forwarding
+* [x] Health, readiness, and metrics endpoints
+* [x] Chat and completions endpoints
+* [x] Mock inference for development
+* [x] Structured JSON logging
+* [x] Basic Prometheus metrics
+* [x] Makefile for task automation
+* [x] Setup and verification scripts
+* [x] Technical and beginner-friendly documentation
 
 ## Planned Features
 
-- [ ] Model serving with KServe + vLLM
-- [ ] Intelligent autoscaling based on inference metrics
-- [ ] GitOps with Argo CD
-- [ ] Complete CI/CD pipeline with GitHub Actions
-- [ ] Infrastructure as Code with Terraform
-- [ ] Canary deployments
-- [ ] Chaos engineering
-- [ ] Defined and monitored SLOs/SLIs
+* [ ] Model serving with KServe + vLLM
+* [ ] Intelligent autoscaling based on inference metrics
+* [ ] Full observability stack (Prometheus, Grafana, Loki, OpenTelemetry)
+* [ ] GitOps with Argo CD
+* [ ] Complete CI/CD pipeline with GitHub Actions
+* [ ] Infrastructure as Code with Terraform
+* [ ] Canary deployments
+* [ ] Chaos engineering
+* [ ] Defined and monitored SLOs/SLIs
 
 ## Quick Start
 
 ### Prerequisites
 
-- Docker 20.10+
-- Kubernetes 1.28+ (Kind for development)
-- Helm 3.0+
-- Python 3.11+
-- Make
+* Docker 20.10+
+* Kubernetes 1.28+ (Kind for development)
+* Helm 3.0+
+* Python 3.11+
+* Make
 
 ### Automated Installation
 
@@ -248,35 +213,25 @@ chmod +x scripts/setup.sh
 # Run the complete setup
 make all
 
-# Deploy observability stack
-make deploy-observability
-
 # Test the API without port forwarding
 curl http://localhost:8080/health
 ```
 
 ### Make Commands
 
-| Command | Description |
-|---------|-------------|
-| `make all` | Runs the complete setup |
-| `make cluster` | Creates the Kind cluster |
-| `make install` | Installs dependencies |
-| `make build` | Builds the Docker image |
+| Command           | Description               |
+| ----------------- | ------------------------- |
+| `make all`        | Runs the complete setup   |
+| `make cluster`    | Creates the Kind cluster  |
+| `make install`    | Installs dependencies     |
+| `make build`      | Builds the Docker image   |
 | `make load-image` | Loads the image into Kind |
-| `make deploy` | Deploys the API |
-| `make deploy-observability` | Deploys observability stack |
-| `make status` | Shows deployment status |
-| `make status-observability` | Shows observability status |
-| `make logs` | Displays API logs |
-| `make logs-observability` | Displays observability logs |
-| `make test-api` | Tests API endpoints |
-| `make port-forward-all` | Starts all port-forwards |
-| `make port-forward-stop` | Stops all port-forwards |
-| `make undeploy` | Removes the API deployment |
-| `make undeploy-observability` | Removes observability (preserves PVC) |
-| `make undeploy-observability-clean` | Removes observability completely |
-| `make clean` | Performs a full cleanup |
+| `make deploy`     | Deploys the platform      |
+| `make status`     | Shows deployment status   |
+| `make logs`       | Displays logs             |
+| `make test-api`   | Tests API endpoints       |
+| `make undeploy`   | Removes the deployment    |
+| `make clean`      | Performs a full cleanup   |
 
 ## API Examples
 
@@ -376,48 +331,9 @@ Response:
 curl http://localhost:8080/metrics
 ```
 
-## Observability
-
-### Accessing the Stack
-
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Grafana | http://localhost:3000 | admin/admin |
-| Prometheus | http://localhost:9090 | - |
-| Loki | http://localhost:3100 | - |
-
-### Metrics Collected
-
-| Metric | Type | Description |
-|--------|------|-------------|
-| `http_requests_total` | Counter | Total HTTP requests |
-| `http_request_latency_seconds` | Histogram | Request latency |
-| `http_active_requests` | Gauge | Active requests |
-| `tokens_input_total` | Counter | Input tokens |
-| `tokens_output_total` | Counter | Output tokens |
-
-### Grafana Dashboards
-
-The following dashboard is provisioned automatically:
-
-- **JC-KubeScale AI - Overview:** Requests/s, P95 Latency, Active Requests, Error Rate, Tokens/s, Pod Status
-
-### Logs with Loki
-
-Logs are collected by Loki and can be queried in Grafana:
-
-1. Access Grafana at http://localhost:3000
-2. Navigate to **Explore**
-3. Select **Loki** as datasource
-4. Query: `{namespace="jc-kubescale"}`
-
-### Traces with OpenTelemetry
-
-The OTel Collector receives traces from the API and exports them for analysis.
-
 ## Project Structure
 
-```
+```text
 jc-kubescale-ai/
 ├── README.md                 # Main documentation
 ├── LICENSE                   # MIT License
@@ -452,23 +368,10 @@ jc-kubescale-ai/
 │           └── tests/       # Unit tests
 │
 ├── deploy/
-│   ├── base/
-│   │   ├── namespace.yaml
-│   │   ├── api-deployment.yaml
-│   │   └── api-service.yaml
-│   │
-│   └── observability/
-│       ├── prometheus-configmap.yaml
-│       ├── prometheus-rules-configmap.yaml
-│       ├── prometheus-rbac.yaml
-│       ├── prometheus-deployment.yaml
-│       ├── grafana-configmap.yaml
-│       ├── grafana-pvc.yaml
-│       ├── grafana-deployment.yaml
-│       ├── loki-configmap.yaml
-│       ├── loki-deployment.yaml
-│       ├── otel-configmap.yaml
-│       └── otel-collector.yaml
+│   └── base/
+│       ├── namespace.yaml
+│       ├── api-deployment.yaml
+│       └── api-service.yaml
 │
 ├── charts/
 │   └── jc-kubescale/        # Helm Chart
@@ -476,10 +379,7 @@ jc-kubescale-ai/
 │       ├── values.yaml
 │       ├── values-dev.yaml
 │       └── templates/
-│
-├── docs/
-│   ├── phase-1-api.md           # Phase 1 documentation
-│   └── phase-2-observability.md # Phase 2 documentation
+
 │
 ├── tests/                    # Tests
 │   ├── unit/
@@ -489,15 +389,8 @@ jc-kubescale-ai/
 │
 └── .github/
     └── workflows/
-        └── ci.yaml          # CI/CD pipeline
+        └── ci.yaml          # Basic CI/CD
 ```
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Phase 1 - API](docs/phase-1-api.md) | Technical guide for the API |
-| [Phase 2 - Observability](docs/phase-2-observability.md) | Technical guide for observability |
 
 ## Autoscaling (Planned)
 
@@ -505,37 +398,50 @@ The JC-KubeScale Autoscaler will implement LLM-specific scaling logic:
 
 **Scale Up — Conditions:**
 
-- `queue_depth > threshold`
-- `KV cache > 80%`
-- `P95 latency > SLO`
+* `queue_depth > threshold`
+* `KV cache > 80%`
+* `P95 latency > SLO`
 
 **Scale Down — Conditions:**
 
-- `queue_depth ≈ 0`
-- `KV cache low`
-- `Normal latency`
+* `queue_depth ≈ 0`
+* `KV cache low`
+* `Normal latency`
+
+## Observability (Planned)
+
+Grafana dashboards will include the following metrics:
+
+* Requests/s
+* P95 latency
+* GPU utilization
+* KV cache utilization
+* Token throughput
+* Active requests
+* Model load time
+* Pod restarts
 
 ## Security (Planned)
 
-- Kubernetes RBAC
-- Network Policies
-- Pod Security Policies
-- Kyverno for policy enforcement
-- TLS for endpoints
-- Managed secrets
-- Rate limiting
-- JWT/OAuth2 support
+* Kubernetes RBAC
+* Network Policies
+* Pod Security Policies
+* Kyverno for policy enforcement
+* TLS for endpoints
+* Managed secrets
+* Rate limiting
+* JWT/OAuth2 support
 
 ## Roadmap
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| **PHASE 1** | MVP with basic API and Kubernetes deployment | Completed |
-| **PHASE 2** | Observability (Prometheus, Grafana, Loki, OTel) | Completed |
-| **PHASE 3** | Intelligent autoscaling | Next |
-| **PHASE 4** | Model Registry and Canary Deployments | Planned |
-| **PHASE 5** | Terraform and production environments (AWS/GCP/Azure) | Planned |
-| **PHASE 6** | SRE (Load Testing, Chaos Engineering, SLOs) | Planned |
+| Phase       | Description                                           | Status    |
+| ----------- | ----------------------------------------------------- | --------- |
+| **PHASE 1** | MVP with basic API and Kubernetes deployment          | Completed |
+| **PHASE 2** | Observability (Prometheus, Grafana, Loki, OTel)       | Next      |
+| **PHASE 3** | Intelligent autoscaling                               | Planned   |
+| **PHASE 4** | Model Registry and Canary Deployments                 | Planned   |
+| **PHASE 5** | Terraform and production environments (AWS/GCP/Azure) | Planned   |
+| **PHASE 6** | SRE (Load Testing, Chaos Engineering, SLOs)           | Planned   |
 
 ## Contributing
 
@@ -557,11 +463,9 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 ## Acknowledgments
 
-- Kubernetes community
-- FastAPI
-- Kind
-- Helm
-- Prometheus
-- Grafana
-- Loki
-- OpenTelemetry
+* Kubernetes community
+* FastAPI
+* Kind
+* Helm
+* Prometheus
+* Grafana

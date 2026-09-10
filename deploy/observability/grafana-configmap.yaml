@@ -1,0 +1,186 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observability
+  labels:
+    app: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.observability.svc.cluster.local:80
+        isDefault: true
+        jsonData:
+          timeInterval: 15s
+          httpMethod: POST
+        editable: true
+      
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.observability.svc.cluster.local:3100
+        jsonData:
+          maxLines: 1000
+          timeout: 60
+        editable: true
+      
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo.observability.svc.cluster.local:3100
+        jsonData:
+          tracesToLogs:
+            datasourceUid: 'loki'
+            tags: ['job', 'instance', 'pod']
+            mappedTags: [{ key: 'service.name', value: 'service' }]
+            mapTagNamesEnabled: true
+            spanStartTimeShift: '-1h'
+            spanEndTimeShift: '1h'
+            filterByTraceID: true
+        editable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-config
+  namespace: observability
+  labels:
+    app: grafana
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'jc-kubescale'
+        orgId: 1
+        folder: 'JC-KubeScale'
+        folderUid: 'jc-kubescale'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: observability
+  labels:
+    app: grafana
+data:
+  jc-kubescale-overview.json: |
+    {
+      "title": "JC-KubeScale AI - Overview",
+      "uid": "jc-kubescale-overview",
+      "version": 1,
+      "timezone": "browser",
+      "refresh": "10s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Requests per Second",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "rate(http_requests_total[1m])",
+              "legendFormat": "{{method}} {{endpoint}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "P95 Latency",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(http_request_latency_seconds_bucket[5m]))",
+              "legendFormat": "{{method}} {{endpoint}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Active Requests",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "http_active_requests",
+              "legendFormat": "Active",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Error Rate",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) * 100",
+              "legendFormat": "Error Rate %",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Tokens per Second",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+          "targets": [
+            {
+              "expr": "rate(tokens_input_total[1m])",
+              "legendFormat": "Input Tokens",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(tokens_output_total[1m])",
+              "legendFormat": "Output Tokens",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Pod Status",
+          "type": "stat",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+          "targets": [
+            {
+              "expr": "count(up{job=\"jc-kubescale-api\"})",
+              "legendFormat": "Running Pods",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {"mode": "thresholds"},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "red", "value": null},
+                  {"color": "green", "value": 0}
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
