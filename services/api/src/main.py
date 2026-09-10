@@ -24,23 +24,24 @@ logger = setup_logging()
 
 # Setup OpenTelemetry
 if settings.OTLP_ENDPOINT:
-    resource = Resource(attributes={
-        SERVICE_NAME: "jc-kubescale-api"
-    })
+    resource = Resource(attributes={SERVICE_NAME: "jc-kubescale-api"})
     provider = TracerProvider(resource=resource)
-    processor = BatchSpanProcessor(
-        OTLPSpanExporter(endpoint=settings.OTLP_ENDPOINT, insecure=True)
-    )
+    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=settings.OTLP_ENDPOINT, insecure=True))
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 
 # Prometheus metrics
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
-REQUEST_LATENCY = Histogram('http_request_latency_seconds', 'HTTP request latency', ['method', 'endpoint'])
-ACTIVE_REQUESTS = Gauge('http_active_requests', 'Active HTTP requests')
-TOKENS_INPUT = Counter('tokens_input_total', 'Total input tokens')
-TOKENS_OUTPUT = Counter('tokens_output_total', 'Total output tokens')
-MODEL_LOAD_TIME = Histogram('model_load_time_seconds', 'Model load time')
+REQUEST_COUNT = Counter(
+    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+)
+REQUEST_LATENCY = Histogram(
+    "http_request_latency_seconds", "HTTP request latency", ["method", "endpoint"]
+)
+ACTIVE_REQUESTS = Gauge("http_active_requests", "Active HTTP requests")
+TOKENS_INPUT = Counter("tokens_input_total", "Total input tokens")
+TOKENS_OUTPUT = Counter("tokens_output_total", "Total output tokens")
+MODEL_LOAD_TIME = Histogram("model_load_time_seconds", "Model load time")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,7 +55,7 @@ app = FastAPI(
     title="JC-KubeScale AI API",
     description="Kubernetes-native AI Inference & Autoscaling Platform",
     version="0.1.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -69,26 +70,22 @@ app.add_middleware(
 if settings.OTLP_ENDPOINT:
     FastAPIInstrumentor.instrument_app(app)
 
+
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
     start_time = time.time()
     ACTIVE_REQUESTS.inc()
-    
+
     try:
         response = await call_next(request)
         latency = time.time() - start_time
-        
+
         REQUEST_COUNT.labels(
-            method=request.method,
-            endpoint=request.url.path,
-            status=response.status_code
+            method=request.method, endpoint=request.url.path, status=response.status_code
         ).inc()
-        
-        REQUEST_LATENCY.labels(
-            method=request.method,
-            endpoint=request.url.path
-        ).observe(latency)
-        
+
+        REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path).observe(latency)
+
         return response
     finally:
         ACTIVE_REQUESTS.dec()
@@ -112,6 +109,7 @@ async def ready():
     inference = InferenceService()
     ready_status = await inference.is_ready()
     return {"status": "ready" if ready_status else "not_ready", "inference": ready_status}
+
 
 if __name__ == "__main__":
 
