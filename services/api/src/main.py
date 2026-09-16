@@ -56,12 +56,12 @@ TOKENS_PER_SECOND = Gauge("tokens_per_second", "Tokens per second")
 async def lifespan(app: FastAPI):
     logger.info("JC-KubeScale AI API starting")
     logger.info(f"Settings: {settings.model_dump()}")
-    
+
     # Inicializar métricas de LLM
     QUEUE_DEPTH.set(0)
     KV_CACHE_UTILIZATION.set(0)
     TOKENS_PER_SECOND.set(0)
-    
+
     yield
     logger.info("JC-KubeScale AI API shutting down")
 
@@ -90,7 +90,7 @@ if settings.OTLP_ENDPOINT:
 async def metrics_middleware(request: Request, call_next):
     start_time = time.time()
     ACTIVE_REQUESTS.inc()
-    
+
     # Simular queue depth durante a requisição
     current_queue = QUEUE_DEPTH._value.get()
     QUEUE_DEPTH.set(current_queue + 1)
@@ -104,12 +104,12 @@ async def metrics_middleware(request: Request, call_next):
         ).inc()
 
         REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path).observe(latency)
-        
+
         # Simular KV cache e tokens após a requisição
         # KV cache aumenta 5% a cada requisição (até 95%)
         current_kv = KV_CACHE_UTILIZATION._value.get()
         KV_CACHE_UTILIZATION.set(min(95.0, current_kv + 5.0))
-        
+
         # Tokens por segundo baseado na latência
         TOKENS_PER_SECOND.set(100.0 / max(latency, 0.001))
 
