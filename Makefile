@@ -372,3 +372,68 @@ backup-grafana:
 		cat /var/lib/grafana/grafana.db > ./backups/grafana-$$(date +%Y%m%d-%H%M%S).db
 	@echo "$(GREEN)Backup salvo em ./backups/$(NC)"
 	@ls -lh ./backups/
+
+# ============================================
+# AUTOSCALING
+# ============================================
+
+install-keda:
+	@echo "$(GREEN)Instalando KEDA...$(NC)"
+	@helm repo add kedacore https://kedacore.github.io/charts 2>/dev/null || true
+	@helm repo update
+	@helm upgrade --install keda kedacore/keda \
+		--namespace keda --create-namespace \
+		--wait --timeout 5m
+	@echo "$(GREEN)KEDA instalado$(NC)"
+
+build-autoscaler:
+	@echo "$(GREEN)Buildando autoscaler...$(NC)"
+	@docker build -t jc-kubescale-autoscaler:latest -f services/autoscaler/Dockerfile services/autoscaler/
+	@echo "$(GREEN)Autoscaler buildado$(NC)"
+
+load-autoscaler: build-autoscaler
+	@echo "$(GREEN)Carregando autoscaler no Kind...$(NC)"
+	@kind load docker-image jc-kubescale-autoscaler:latest --name jc-kubescale
+	@echo "$(GREEN)Autoscaler carregado$(NC)"
+
+deploy-autoscaling: install-keda load-autoscaler
+	@echo "$(GREEN)Deploy do autoscaling...$(NC)"
+	@kubectl config use-context kind-jc-kubescale 2>/dev/null || true
+	@kubectl apply -f deploy/autoscaling/autoscaler-rbac.yaml
+	@kubectl apply -f deploy/autoscaling/autoscaler-deployment.yaml
+	@kubectl apply -f deploy/autoscaling/triggerauthentication.yaml
+	@kubectl apply -f deploy/autoscaling/scaledobject.yaml
+	@echo "$(GREEN)Aguardando pods...$(NC)"
+	@kubectl wait --for=condition=ready pod -l app=jc-kubescale-autoscaler -n jc-kubescale --timeout=180s 2>/dev/null || true
+	@echo "$(GREEN)Autoscaling deployado!$(NC)"
+	@echo ""
+	@echo "$(GREEN)Verificar status:$(NC)"
+	@echo "  kubectl get scaledobject -n jc-kubescale"
+	@echo "  kubectl get hpa -n jc-kubescale"
+	@echo "  kubectl get pods -n jc-kubescale"
+
+status-autoscaling:
+	@kubectl config use-context kind-jc-kubescale 2>/dev/null || true
+	@echo "$(GREEN)=== ScaledObjects ===$(NC)"
+	@kubectl get scaledobject -n jc-kubescale
+	@echo ""
+	@echo "$(GREEN)=== HPAs ===$(NC)"
+	@kubectl get hpa -n jc-kubescale
+	@echo ""
+	@echo "$(GREEN)=== Autoscaler Pods ===$(NC)"
+	@kubectl get pods -n jc-kubescale -l app=jc-kubescale-autoscaler
+	@echo ""
+	@echo "$(GREEN)=== API Pods ===$(NC)"
+	@kubectl get pods -n jc-kubescale -l app=jc-kubescale-api
+
+logs-autoscaler:
+	@kubectl logs -n jc-kubescale -l app=jc-kubescale-autoscaler --tail=100 -f
+
+undeploy-autoscaling:
+	@echo "$(GREEN)Removendo autoscaling...$(NC)"
+	@kubectl config use-context kind-jc-kubescale 2>/dev/null || true
+	@kubectl delete -f deploy/autoscaling/scaledobject.yaml 2>/dev/null || true
+	@kubectl delete -f deploy/autoscaling/triggerauthentication.yaml 2>/dev/null || true
+	@kubectl delete -f deploy/autoscaling/autoscaler-deployment.yaml 2>/dev/null || true
+	@kubectl delete -f deploy/autoscaling/autoscaler-rbac.yaml 2>/dev/null || true
+	@echo "$(GREEN)Autoscaling removido$(NC)"

@@ -10,17 +10,19 @@ Kubernetes-Native AI Inference & Autoscaling Platform
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)](https://fastapi.tiangolo.com)
 [![Prometheus](https://img.shields.io/badge/Prometheus-2.51-orange)](https://prometheus.io)
 [![Grafana](https://img.shields.io/badge/Grafana-10.4-orange)](https://grafana.com)
-[![Phase](https://img.shields.io/badge/Phase-2-yellow)](https://github.com/jacivaldocarvalho/jc-kubescale-ai)
+[![KEDA](https://img.shields.io/badge/KEDA-2.14-blue)](https://keda.sh)
+[![Phase](https://img.shields.io/badge/Phase-3-yellow)](https://github.com/jacivaldocarvalho/jc-kubescale-ai)
 
 ## Project Status
 
-**PHASE 2 - Observability Completed**
+**PHASE 3 - Intelligent Autoscaling Completed**
 
 | Phase | Description | Status |
 |-------|-------------|--------|
 | **PHASE 1** | MVP with basic API and Kubernetes deployment | Completed |
 | **PHASE 2** | Observability (Prometheus, Grafana, Loki, OTel) | Completed |
-| **PHASE 3** | Intelligent autoscaling | Next |
+| **PHASE 3** | Intelligent autoscaling | Completed |
+| **PHASE 4** | Model Registry and Canary Deployments | Next |
 
 ## Problem
 
@@ -67,7 +69,7 @@ curl http://localhost:8080/v1/chat \
 }
 ```
 
-## Current Architecture (PHASE 2)
+## Current Architecture (PHASE 3)
 
 ```
                          CLIENT
@@ -90,7 +92,7 @@ curl http://localhost:8080/v1/chat \
                     ┌─────────────────┐
                     │   Deployment    │
                     │ jc-kubescale-api│
-                    │    Replicas: 1  │
+                    │  Replicas: 1→10 │
                     └────────┬────────┘
                              │
                              ▼
@@ -105,6 +107,22 @@ curl http://localhost:8080/v1/chat \
                     │  /v1/models     │
                     │  /v1/chat       │
                     │  /v1/completions│
+                    └─────────────────┘
+                             ▲
+                             │
+                    ┌────────┴────────┐
+                    │   Autoscaling   │
+                    │                 │
+                    │  ┌───────────┐  │
+                    │  │   KEDA    │  │
+                    │  │ ScaledObject│ │
+                    │  │   HPA     │  │
+                    │  └─────┬─────┘  │
+                    │        │        │
+                    │  ┌─────┴─────┐  │
+                    │  │Autoscaler │  │
+                    │  │ JC-KubeScale│ │
+                    │  └───────────┘  │
                     └─────────────────┘
 
 
@@ -209,10 +227,22 @@ curl http://localhost:8080/v1/chat \
 - [x] Automated port-forwarding
 - [x] Health checks and readiness probes
 
+## Implemented Features (PHASE 3)
+
+- [x] KEDA for event-driven autoscaling
+- [x] JC-KubeScale Autoscaler service
+- [x] LLM-specific metrics (queue_depth, kv_cache, p95_latency)
+- [x] ScaledObject with Prometheus triggers
+- [x] RBAC for autoscaler
+- [x] HPA with scaling policies
+- [x] Scale up based on queue_depth, KV cache, P95 latency
+- [x] Scale down based on low utilization
+- [x] Manual scaling endpoint
+- [x] Reconciliation loop
+
 ## Planned Features
 
 - [ ] Model serving with KServe + vLLM
-- [ ] Intelligent autoscaling based on inference metrics
 - [ ] GitOps with Argo CD
 - [ ] Complete CI/CD pipeline with GitHub Actions
 - [ ] Infrastructure as Code with Terraform
@@ -251,6 +281,9 @@ make all
 # Deploy observability stack
 make deploy-observability
 
+# Deploy autoscaling stack
+make deploy-autoscaling
+
 # Test the API without port forwarding
 curl http://localhost:8080/health
 ```
@@ -266,16 +299,20 @@ curl http://localhost:8080/health
 | `make load-image` | Loads the image into Kind |
 | `make deploy` | Deploys the API |
 | `make deploy-observability` | Deploys observability stack |
+| `make deploy-autoscaling` | Deploys autoscaling stack |
 | `make status` | Shows deployment status |
 | `make status-observability` | Shows observability status |
+| `make status-autoscaling` | Shows autoscaling status |
 | `make logs` | Displays API logs |
 | `make logs-observability` | Displays observability logs |
+| `make logs-autoscaler` | Displays autoscaler logs |
 | `make test-api` | Tests API endpoints |
 | `make port-forward-all` | Starts all port-forwards |
 | `make port-forward-stop` | Stops all port-forwards |
 | `make undeploy` | Removes the API deployment |
 | `make undeploy-observability` | Removes observability (preserves PVC) |
 | `make undeploy-observability-clean` | Removes observability completely |
+| `make undeploy-autoscaling` | Removes autoscaling |
 | `make clean` | Performs a full cleanup |
 
 ## API Examples
@@ -395,6 +432,9 @@ curl http://localhost:8080/metrics
 | `http_active_requests` | Gauge | Active requests |
 | `tokens_input_total` | Counter | Input tokens |
 | `tokens_output_total` | Counter | Output tokens |
+| `queue_depth` | Gauge | Current queue depth |
+| `kv_cache_utilization` | Gauge | KV cache utilization percentage |
+| `tokens_per_second` | Gauge | Tokens per second |
 
 ### Grafana Dashboards
 
@@ -414,6 +454,102 @@ Logs are collected by Loki and can be queried in Grafana:
 ### Traces with OpenTelemetry
 
 The OTel Collector receives traces from the API and exports them for analysis.
+
+## Autoscaling
+
+### Architecture
+
+The JC-KubeScale Autoscaler scales the API based on inference-specific metrics:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Autoscaling Stack                        │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              JC-KubeScale Autoscaler                │   │
+│  │  - queue_depth                                      │   │
+│  │  - KV cache utilization                             │   │
+│  │  - P95 latency                                      │   │
+│  │  - tokens_per_second                                │   │
+│  └───────────────────────┬─────────────────────────────┘   │
+│                          │                                  │
+│                          ▼                                  │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                    KEDA                             │   │
+│  │  - ScaledObject                                     │   │
+│  │  - HPA                                              │   │
+│  └───────────────────────┬─────────────────────────────┘   │
+│                          │                                  │
+│                          ▼                                  │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              Deployment (API)                       │   │
+│  │  Replicas: 1 → 10                                   │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Scaling Metrics
+
+| Metric | Threshold | Description |
+|--------|-----------|-------------|
+| `queue_depth` | 5 | Queue depth |
+| `kv_cache_utilization` | 80% | KV cache usage |
+| `p95_latency` | 2s | P95 latency |
+
+### Scale Up Conditions
+
+- `queue_depth > 5`
+- `KV cache > 80%`
+- `P95 latency > 2s`
+
+### Scale Down Conditions
+
+- `queue_depth ≈ 0`
+- `KV cache < 30%`
+- `P95 latency < 0.5s`
+
+### Autoscaler API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/ready` | GET | Readiness probe |
+| `/metrics` | GET | Prometheus metrics |
+| `/v1/metrics` | GET | Current metrics |
+| `/v1/replicas` | GET | Current replica count |
+| `/v1/reconcile` | POST | Trigger reconciliation |
+| `/v1/scale?replicas=N` | POST | Manual scaling |
+
+### Commands
+
+```bash
+# Deploy autoscaling
+make deploy-autoscaling
+
+# Check status
+make status-autoscaling
+
+# View logs
+make logs-autoscaler
+
+# Remove autoscaling
+make undeploy-autoscaling
+```
+
+### Testing
+
+```bash
+# Generate load
+for i in {1..100}; do
+  curl -s http://localhost:8080/v1/chat \
+    -H "Content-Type: application/json" \
+    -d '{"message": "teste '$i'"}' > /dev/null &
+done
+wait
+
+# Check scaling
+kubectl get hpa -n jc-kubescale -w
+```
 
 ## Project Structure
 
@@ -435,21 +571,34 @@ jc-kubescale-ai/
 │       └── kind-config.yaml # Kind configuration
 │
 ├── services/
-│   └── api/
-│       ├── Dockerfile       # API image
-│       ├── Dockerfile.dev   # Development mode
-│       ├── requirements.txt # Python dependencies
-│       ├── pyproject.toml   # Project configuration
+│   ├── api/
+│   │   ├── Dockerfile       # API image
+│   │   ├── Dockerfile.dev   # Development mode
+│   │   ├── requirements.txt # Python dependencies
+│   │   ├── pyproject.toml   # Project configuration
+│   │   └── src/
+│   │       ├── __init__.py
+│   │       ├── main.py      # Entry point
+│   │       ├── app/
+│   │       │   ├── __init__.py
+│   │       │   ├── api/     # Endpoints and routes
+│   │       │   ├── core/    # Configuration and logging
+│   │       │   ├── models/  # Pydantic schemas
+│   │       │   └── services/# Business logic
+│   │       └── tests/       # Unit tests
+│   │
+│   └── autoscaler/          # JC-KubeScale Autoscaler
+│       ├── Dockerfile
+│       ├── requirements.txt
 │       └── src/
 │           ├── __init__.py
-│           ├── main.py      # Entry point
+│           ├── main.py
 │           ├── app/
 │           │   ├── __init__.py
-│           │   ├── api/     # Endpoints and routes
-│           │   ├── core/    # Configuration and logging
-│           │   ├── models/  # Pydantic schemas
-│           │   └── services/# Business logic
-│           └── tests/       # Unit tests
+│           │   ├── api/
+│           │   ├── core/
+│           │   └── services/
+│           └── tests/
 │
 ├── deploy/
 │   ├── base/
@@ -457,18 +606,26 @@ jc-kubescale-ai/
 │   │   ├── api-deployment.yaml
 │   │   └── api-service.yaml
 │   │
-│   └── observability/
-│       ├── prometheus-configmap.yaml
-│       ├── prometheus-rules-configmap.yaml
-│       ├── prometheus-rbac.yaml
-│       ├── prometheus-deployment.yaml
-│       ├── grafana-configmap.yaml
-│       ├── grafana-pvc.yaml
-│       ├── grafana-deployment.yaml
-│       ├── loki-configmap.yaml
-│       ├── loki-deployment.yaml
-│       ├── otel-configmap.yaml
-│       └── otel-collector.yaml
+│   ├── observability/
+│   │   ├── prometheus-configmap.yaml
+│   │   ├── prometheus-rules-configmap.yaml
+│   │   ├── prometheus-rbac.yaml
+│   │   ├── prometheus-deployment.yaml
+│   │   ├── grafana-configmap.yaml
+│   │   ├── grafana-pvc.yaml
+│   │   ├── grafana-deployment.yaml
+│   │   ├── loki-configmap.yaml
+│   │   ├── loki-deployment.yaml
+│   │   ├── otel-configmap.yaml
+│   │   └── otel-collector.yaml
+│   │
+│   └── autoscaling/
+│       ├── autoscaler-rbac.yaml
+│       ├── autoscaler-deployment.yaml
+│       ├── autoscaler-service.yaml
+│       ├── scaledobject.yaml
+│       ├── triggerauthentication.yaml
+│       └── keda-install.yaml
 │
 ├── charts/
 │   └── jc-kubescale/        # Helm Chart
@@ -479,7 +636,8 @@ jc-kubescale-ai/
 │
 ├── docs/
 │   ├── phase-1-api.md           # Phase 1 documentation
-│   └── phase-2-observability.md # Phase 2 documentation
+│   ├── phase-2-observability.md # Phase 2 documentation
+│   └── phase-3-autoscaling.md   # Phase 3 documentation
 │
 ├── tests/                    # Tests
 │   ├── unit/
@@ -498,22 +656,7 @@ jc-kubescale-ai/
 |----------|-------------|
 | [Phase 1 - API](docs/phase-1-api.md) | Technical guide for the API |
 | [Phase 2 - Observability](docs/phase-2-observability.md) | Technical guide for observability |
-
-## Autoscaling (Planned)
-
-The JC-KubeScale Autoscaler will implement LLM-specific scaling logic:
-
-**Scale Up — Conditions:**
-
-- `queue_depth > threshold`
-- `KV cache > 80%`
-- `P95 latency > SLO`
-
-**Scale Down — Conditions:**
-
-- `queue_depth ≈ 0`
-- `KV cache low`
-- `Normal latency`
+| [Phase 3 - Autoscaling](docs/phase-3-autoscaling.md) | Technical guide for autoscaling |
 
 ## Security (Planned)
 
@@ -532,8 +675,8 @@ The JC-KubeScale Autoscaler will implement LLM-specific scaling logic:
 |-------|-------------|--------|
 | **PHASE 1** | MVP with basic API and Kubernetes deployment | Completed |
 | **PHASE 2** | Observability (Prometheus, Grafana, Loki, OTel) | Completed |
-| **PHASE 3** | Intelligent autoscaling | Next |
-| **PHASE 4** | Model Registry and Canary Deployments | Planned |
+| **PHASE 3** | Intelligent autoscaling | Completed |
+| **PHASE 4** | Model Registry and Canary Deployments | Next |
 | **PHASE 5** | Terraform and production environments (AWS/GCP/Azure) | Planned |
 | **PHASE 6** | SRE (Load Testing, Chaos Engineering, SLOs) | Planned |
 
@@ -553,7 +696,8 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 ## Author
 
-**Jacivaldo Carvalho** - [GitHub](https://github.com/jacivaldocarvalho)
+**Jacivaldo Carvalho**
+Telecommunications Engineer | DevOps | SRE | Networking
 
 ## Acknowledgments
 
@@ -565,3 +709,5 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 - Grafana
 - Loki
 - OpenTelemetry
+- KEDA
+

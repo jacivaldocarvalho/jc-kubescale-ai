@@ -1,0 +1,51 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: jc-kubescale-api-scaler
+  namespace: jc-kubescale
+  labels:
+    app: jc-kubescale-api
+spec:
+  scaleTargetRef:
+    name: jc-kubescale-api
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  pollingInterval: 15
+  cooldownPeriod: 60
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 30
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 30
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 25
+              periodSeconds: 60
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-server.observability.svc.cluster.local:80
+        metricName: queue_depth
+        query: sum(queue_depth)
+        threshold: "5"
+        activationThreshold: "1"
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-server.observability.svc.cluster.local:80
+        metricName: kv_cache_utilization
+        query: avg(kv_cache_utilization)
+        threshold: "80"
+        activationThreshold: "50"
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-server.observability.svc.cluster.local:80
+        metricName: p95_latency
+        query: max(histogram_quantile(0.95, sum(rate(http_request_latency_seconds_bucket[5m])) by (le)))
+        threshold: "2"
+        activationThreshold: "0.5"
