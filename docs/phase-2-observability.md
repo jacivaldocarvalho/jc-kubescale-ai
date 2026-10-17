@@ -2,45 +2,32 @@
 
 ## Overview
 
-PHASE 2 of JC-KubeScale AI implements a complete observability stack for monitoring the LLM inference platform. The goal is to provide visibility into metrics, logs, and traces, making it possible to identify issues, optimize performance, and ensure reliability.
+PHASE 2 provides the local observability components for the platform. Prometheus
+scrapes application metrics and Grafana provisions an overview dashboard.
+Loki is deployed without a log shipper, and the OTel Collector exports received
+telemetry to debug logs. Centralized application logs and persistent trace
+storage still require integration; a configured Tempo datasource does not
+deploy Tempo. The [README](../README.md) describes the current project scope.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         JC-KUBESCALE AI                                 │
-│                                                                        │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                      API (FastAPI)                              │   │
-│  │  ┌─────────────────────────────────────────────────────────────┐│   │
-│  │  │  /metrics  │  /v1/chat  │  /v1/models  │  /v1/completions ││   │
-│  │  └─────────────────────────────────────────────────────────────┘│   │
-│  └───────────────────────────┬─────────────────────────────────────┘   │
-│                              │                                         │
-│  ┌───────────────────────────┼─────────────────────────────────────┐   │
-│  │                           │                                     │   │
-│  │  ┌────────────────────────┴────────────────────────┐           │   │
-│  │  │              OpenTelemetry Collector           │           │   │
-│  │  │          (receives traces from the API)        │           │   │
-│  │  └────────────────────────┬────────────────────────┘           │   │
-│  │                           │                                     │   │
-│  │  ┌────────────────────────┼────────────────────────┐           │   │
-│  │  │                        │                        │           │   │
-│  │  ▼                        ▼                        ▼           │   │
-│  │ ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │   │
-│  │ │  Prometheus  │  │     Loki     │  │  OTel/Tempo  │        │   │
-│  │ │  (Metrics)   │  │    (Logs)    │  │   (Traces)   │        │   │
-│  │ └──────┬───────┘  └──────┬───────┘  └──────┬───────┘        │   │
-│  │        │                  │                 │                  │   │
-│  │        └──────────────────┼─────────────────┘                  │   │
-│  │                           │                                    │   │
-│  │                           ▼                                    │   │
-│  │              ┌─────────────────────┐                          │   │
-│  │              │       Grafana       │                          │   │
-│  │              │   (Visualization)   │                          │   │
-│  │              └─────────────────────┘                          │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Platform["JC-KubeScale AI"]
+        API["API: FastAPI<br/>/metrics · /v1/chat · /v1/models · /v1/completions"]
+        subgraph Observability["Observability"]
+            Collector["OpenTelemetry Collector<br/>Receives traces from the API"]
+            Prometheus["Prometheus<br/>Metrics"]
+            Loki["Loki<br/>Logs"]
+            Debug["Debug exporter<br/>Collector logs"]
+            Grafana["Grafana<br/>Visualization"]
+            Collector --> Debug
+            Prometheus --> Grafana
+            Loki --> Grafana
+        end
+        API --> Collector
+        API -->|scraped HTTP metrics| Prometheus
+    end
 ```
 
 ## Components
@@ -125,8 +112,13 @@ annotations:
 | `http_requests_total`          | Counter   | Total number of HTTP requests |
 | `http_request_latency_seconds` | Histogram | Request latency               |
 | `http_active_requests`         | Gauge     | Active requests               |
-| `tokens_input_total`           | Counter   | Total number of input tokens  |
-| `tokens_output_total`          | Counter   | Total number of output tokens |
+| `tokens_input_total`           | Counter   | Declared; not updated by the current mock inference path |
+| `tokens_output_total`          | Counter   | Declared; not updated by the current mock inference path |
+
+The API also publishes simulated `queue_depth`, `kv_cache_utilization`, and
+`tokens_per_second` signals. These are useful for local experiments but do
+not measure a real model engine. Prometheus stores its data in `emptyDir`;
+pod replacement can lose the history.
 
 ### 1.5. Alerts
 
@@ -146,6 +138,11 @@ Grafana is configured through ConfigMaps:
 
 * **Data sources:** Prometheus, Loki, Tempo
 * **Dashboards:** Automatically provisioned dashboards
+
+Only the overview embedded in `deploy/observability/grafana-configmap.yaml`
+is provisioned by the base deployment. Other dashboard JSON files require
+explicit provisioning. Tempo is a datasource definition only; no Tempo
+Deployment is supplied.
 
 ### 2.2. Persistence
 
@@ -201,6 +198,11 @@ schema_config:
 
 Loki does not provide a web interface. Logs are viewed through **Grafana Explore**.
 
+Application logs must first be shipped by a collector, which is not deployed
+by the current manifests. Until ingestion is configured, inspect application
+JSON logs with `kubectl logs`; an empty Loki query is not evidence that the
+application produced no logs. Loki storage is not backed by a PVC here.
+
 ## 4. OpenTelemetry Collector
 
 ### 4.1. Configuration
@@ -228,6 +230,11 @@ exporters:
 | traces   | otlp      | memory_limiter, batch | debug     |
 | metrics  | otlp      | memory_limiter, batch | debug     |
 | logs     | otlp      | memory_limiter, batch | debug     |
+
+The API configures OTLP tracing. Receiver pipelines for logs and metrics do
+not automatically collect container stdout or replace Prometheus scraping.
+Inspect collector logs to validate receipt; trace search requires an additional
+backend integration.
 
 ## 5. Operational Commands
 
@@ -318,8 +325,10 @@ curl -s http://localhost:3100/ready
 # List labels
 curl -s http://localhost:3100/loki/api/v1/labels
 
-# Query logs
-curl -s "http://localhost:3100/loki/api/v1/query_range?query={namespace=\"jc-kubescale\"}&limit=10" | python3 -m json.tool
+# Query logs after configuring a shipper that supplies the namespace label
+curl --fail-with-body -sS -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={namespace="jc-kubescale"}' \
+  --data-urlencode 'limit=10' | python3 -m json.tool
 ```
 
 ### 7.3. Verify Grafana
@@ -369,7 +378,9 @@ kubectl get pod -n jc-kubescale -l app=jc-kubescale-api -o jsonpath='{.items[0].
 | -------------------------------------- | ------------------------------------- |
 | `field max_entries_limit not found`    | Use `max_entries_limit_per_query`     |
 | `schema v13 is required`               | Update the schema to v13 and use TSDB |
-| `logging exporter has been deprecated` | Use the `debug` exporter              |
+
+The `logging exporter has been deprecated` message belongs to the OTel
+Collector rather than Loki. The supplied Collector configuration uses `debug`.
 
 ### 8.3. No Data in Grafana
 
@@ -395,8 +406,9 @@ kubectl get pod -n jc-kubescale -l app=jc-kubescale-api -o jsonpath='{.items[0].
 # Check StorageClasses
 kubectl get storageclass
 
-# Install local-path-provisioner (included with Kind)
-kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+# Inspect the claim and provisioner events before changing storage components
+kubectl describe pvc grafana-pvc -n observability
+kubectl get pods -n local-path-storage
 ```
 
 ## 9. Best Practices
@@ -416,9 +428,17 @@ annotations:
 
 Dashboards and data sources should be version-controlled in Git through ConfigMaps. Manual configuration should be avoided.
 
+Argo CD adoption is planned for Phase 5, not installed by the current deployment
+targets. See the [Phase 5 plan](../README.md#phase-5--local-gitops-with-argo-cd)
+for repository ownership, ordering, and persistence considerations.
+
 ### 9.3. Persistence
 
 The Grafana PVC preserves data across restarts. Use `make undeploy-observability` (not `clean`) to preserve the data.
+
+Deleting the Kind cluster still deletes its local storage. The current manual
+backup copies the Grafana SQLite file; recovery and consistent backup automation
+remain to be validated.
 
 ### 9.4. Security
 
@@ -428,6 +448,10 @@ The Grafana PVC preserves data across restarts. Use `make undeploy-observability
 
 ## 10. Next Steps
 
+The [Phase 5 and Phase 6 plans](../README.md#next-phases) cover GitOps adoption
+and real inference metrics. Observability improvements that remain include:
+
+* [ ] Ship application logs to Loki
 * [ ] Configure alerts in Alertmanager
 * [ ] Add dashboards for Loki
 * [ ] Configure Tempo for traces

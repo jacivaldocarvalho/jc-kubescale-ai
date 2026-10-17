@@ -6,6 +6,7 @@ python-multipart==0.0.31
 httpx==0.28.1
 python-json-logger==3.2.1
 prometheus-client==0.21.1
+kubernetes==29.0.0
 
 # OpenTelemetry
 opentelemetry-api==1.28.0

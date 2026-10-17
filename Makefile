@@ -1,6 +1,7 @@
 .PHONY: help check-deps cluster cluster-delete install build load-image deploy deploy-clean undeploy test test-api logs status clean install-python-deps restart all deploy-observability undeploy-observability undeploy-observability-clean status-observability logs-observability backup-grafana port-forward-all port-forward-stop port-forward-grafana port-forward-prometheus port-forward-loki
 
 SHELL := /bin/bash
+.PHONY: build-canary load-canary deploy-canary status-canary logs-canary undeploy-canary
 KUBECONFIG := $(HOME)/.kube/config
 
 NAMESPACE := jc-kubescale
@@ -95,14 +96,18 @@ deploy-clean:
 
 deploy: check-deps build load-image deploy-clean
 	@echo "$(GREEN)Deploy da plataforma...$(NC)"
-	@kubectl config use-context kind-jc-kubescale 2>/dev/null || true
+	@kubectl config use-context kind-jc-kubescale
 	@kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f - 2>/dev/null || true
 	@echo "$(GREEN)Aplicando manifests...$(NC)"
 	@kubectl apply -f deploy/base/namespace.yaml
+	@echo "$(GREEN)Aplicando ServiceAccount e RBAC...$(NC)"
+	@kubectl apply -f deploy/base/api-rbac.yaml
 	@kubectl apply -f deploy/base/api-deployment.yaml
 	@kubectl apply -f deploy/base/api-service.yaml
 	@echo "$(GREEN)Aguardando pods...$(NC)"
-	@kubectl wait --for=condition=ready pod -l app=jc-kubescale-api -n $(NAMESPACE) --timeout=120s 2>/dev/null || true
+	@kubectl rollout status deployment/jc-kubescale-api -n $(NAMESPACE) --timeout=120s
+	@test "$$(kubectl get deployment jc-kubescale-api -n $(NAMESPACE) -o jsonpath='{.spec.template.spec.serviceAccountName}')" = "jc-kubescale-api" || { echo "$(RED)ServiceAccount incorreta no Deployment$(NC)"; exit 1; }
+	@kubectl get pods -n $(NAMESPACE) -l app=jc-kubescale-api -o custom-columns=NAME:.metadata.name,SERVICE_ACCOUNT:.spec.serviceAccountName,PHASE:.status.phase
 	@echo "$(GREEN)Deploy concluido!$(NC)"
 	@echo ""
 	@echo "$(GREEN)========================================$(NC)"
@@ -437,3 +442,44 @@ undeploy-autoscaling:
 	@kubectl delete -f deploy/autoscaling/autoscaler-deployment.yaml 2>/dev/null || true
 	@kubectl delete -f deploy/autoscaling/autoscaler-rbac.yaml 2>/dev/null || true
 	@echo "$(GREEN)Autoscaling removido$(NC)"
+
+
+# ============================================
+# MODEL REGISTRY E CANARY
+# ============================================
+
+build-canary: ## Build da imagem do Canary controller
+	@echo "$(GREEN)Buildando canary controller...$(NC)"
+	@docker build -t jc-kubescale-canary:latest -f services/canary/Dockerfile services/canary/
+	@echo "$(GREEN)Canary buildado$(NC)"
+
+load-canary: build-canary ## Carrega a imagem Canary no Kind
+	@echo "$(GREEN)Carregando canary no Kind...$(NC)"
+	@kind load docker-image jc-kubescale-canary:latest --name jc-kubescale
+	@echo "$(GREEN)Canary carregado$(NC)"
+
+deploy-canary: load-canary ## Implanta o Canary controller
+	@echo "$(GREEN)Deploy do canary...$(NC)"
+	@kubectl config use-context kind-jc-kubescale
+	@kubectl apply -f deploy/canary/canary-rbac.yaml
+	@kubectl apply -f deploy/canary/canary-deployment.yaml
+	@kubectl wait --for=condition=ready pod -l app=jc-kubescale-canary -n $(NAMESPACE) --timeout=180s
+	@echo "$(GREEN)Canary deployado!$(NC)"
+
+status-canary: ## Exibe os pods e a porcentagem Canary
+	@kubectl config use-context kind-jc-kubescale
+	@echo "$(GREEN)=== Canary Pods ===$(NC)"
+	@kubectl get pods -n $(NAMESPACE) -l app=jc-kubescale-canary
+	@echo ""
+	@echo "$(GREEN)=== Canary Percentage ===$(NC)"
+	@kubectl get deployment jc-kubescale-api -n $(NAMESPACE) -o go-template='{{with index .metadata.annotations "jc-kubescale/canary"}}{{.}}{{else}}0{{end}}{{"\n"}}'
+
+logs-canary: ## Acompanha os logs do Canary controller
+	@kubectl logs -n $(NAMESPACE) -l app=jc-kubescale-canary --tail=100 -f
+
+undeploy-canary: ## Remove o Canary controller e seu RBAC
+	@echo "$(GREEN)Removendo canary...$(NC)"
+	@kubectl config use-context kind-jc-kubescale
+	@kubectl delete -f deploy/canary/canary-deployment.yaml --ignore-not-found
+	@kubectl delete -f deploy/canary/canary-rbac.yaml --ignore-not-found
+	@echo "$(GREEN)Canary removido$(NC)"

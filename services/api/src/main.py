@@ -3,8 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import time
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import (
+    Counter,
+    Histogram,
+    Gauge,
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
 from starlette.responses import Response
+from fastapi.responses import JSONResponse
 
 # OpenTelemetry imports
 from opentelemetry import trace
@@ -17,7 +24,9 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.routes import router
+from app.api.model_registry import router as model_registry_router
 from app.services.inference import InferenceService
+from app.services.model_registry import RegistryStorageError
 
 # Setup logging
 logger = setup_logging()
@@ -73,6 +82,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+@app.exception_handler(RegistryStorageError)
+async def registry_storage_error_handler(request: Request, exc: RegistryStorageError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "code": exc.code},
+    )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -100,7 +118,9 @@ async def metrics_middleware(request: Request, call_next):
         latency = time.time() - start_time
 
         REQUEST_COUNT.labels(
-            method=request.method, endpoint=request.url.path, status=response.status_code
+            method=request.method,
+            endpoint=request.url.path,
+            status=response.status_code,
         ).inc()
 
         REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path).observe(latency)
@@ -122,6 +142,7 @@ async def metrics_middleware(request: Request, call_next):
 
 
 app.include_router(router)
+app.include_router(model_registry_router)
 
 
 @app.get("/metrics")
@@ -138,7 +159,10 @@ async def health():
 async def ready():
     inference = InferenceService()
     ready_status = await inference.is_ready()
-    return {"status": "ready" if ready_status else "not_ready", "inference": ready_status}
+    return {
+        "status": "ready" if ready_status else "not_ready",
+        "inference": ready_status,
+    }
 
 
 if __name__ == "__main__":

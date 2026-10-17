@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-qwen-v1
+  namespace: jc-kubescale
+  labels:
+    app: jc-kubescale-api
+    model: qwen
+    version: v1
+data:
+  model.yaml: |
+    name: qwen
+    version: "1"
+    status: ready
+    path: /models/qwen-v1
+    size: 7B
+    metadata:
+      description: "Qwen 7B - Versao base"
+      parameters: "7B"
+      quantization: "none"
