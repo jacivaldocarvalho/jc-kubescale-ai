@@ -9,18 +9,10 @@ from app.api.models import (
 )
 from app.api.dependencies import get_inference_service
 from app.services.inference import InferenceService
-from app.models.schemas import ModelInfo, ModelsResponse, Usage
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1")
-
-
-@router.get("/models", response_model=ModelsResponse)
-async def list_models():
-    inference = InferenceService()
-    models = await inference.list_models()
-    return ModelsResponse(models=models)
 
 
 @router.post("/chat", response_model=ChatResponse)

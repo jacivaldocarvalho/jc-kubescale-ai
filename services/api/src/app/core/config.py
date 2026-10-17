@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     MODEL_NAME: str = "qwen"
     MODEL_VERSION: str = "1"
 
+    # Model Registry
+    MODEL_REGISTRY_CONFIGMAP: str = "model-registry"
+    MODEL_REGISTRY_NAMESPACE: str = "jc-kubescale"
+
     # Observability
     OTLP_ENDPOINT: Optional[str] = "otel-collector.observability.svc.cluster.local:4317"
     LOG_LEVEL: str = "INFO"

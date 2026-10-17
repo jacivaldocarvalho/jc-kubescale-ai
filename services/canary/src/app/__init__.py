@@ -1,0 +1,1 @@
+"""Aplicacao do Canary controller."""

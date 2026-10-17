@@ -67,6 +67,7 @@ Python / FastAPI
 --------------------------------------------
 
 pycache/
+__pycache__/
 *.py[cod]
 *$py.class
 
@@ -238,6 +239,10 @@ KServe / Model Serving
 Configurações locais de modelos
 
 models/
+!services/api/src/app/models/
+!services/api/src/app/models/*.py
+!deploy/models/
+!deploy/models/*.yaml
 model-cache/
 model-cache/
 huggingface/
